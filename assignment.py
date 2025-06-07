@@ -34,7 +34,7 @@ def button_callback(pin):
     global detect_on
     detect_on = not detect_on
     status = "ON" if detect_on else "OFF"
-    print(f"[BUTTON] 얼굴 인식 상태: {status}")
+    print(f"[SYSTEM] 감시 상태 전환됨 → 현재 상태: {status}")
 
     if current_chat_id and app and loop:
         loop.call_soon_threadsafe(lambda: asyncio.create_task(
@@ -53,7 +53,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "버튼을 눌러 얼굴 인식을 켜고 끌 수 있어요.",
         parse_mode=None
     )
-    print(f"[INFO] chat_id 등록됨: {current_chat_id}")
+    print(f"[INFO] 사용자 등록됨 - chat_id: {current_chat_id}")
 
 # === 얼굴 + 눈 감지 루프 ===
 def face_eye_detect_loop():
@@ -87,7 +87,7 @@ def face_eye_detect_loop():
                     cv2.imwrite(filename, image)
 
                     GPIO.output(LED_PIN, GPIO.HIGH)
-                    print("[DETECT] 얼굴 + 눈 2개 감지됨 → 사진 전송 + LED ON")
+                    print("[ALERT] 얼굴 및 눈 2개 감지됨 - 이미지 캡처 및 전송 수행됨")
 
                     if loop and app:
                         loop.call_soon_threadsafe(lambda: asyncio.create_task(
@@ -109,7 +109,7 @@ def face_eye_detect_loop():
 # === 메인 ===
 if __name__ == '__main__':
     try:
-        print("얼굴+눈 감지 봇 실행 중... /start 입력 후 버튼으로 제어하세요.")
+        print("=== 보안 감시 시스템 실행 중 === /start 입력 후 감시 시작 가능")
         app = ApplicationBuilder().token(TOKEN).build()
         app.add_handler(CommandHandler("start", start))
 
@@ -123,9 +123,9 @@ if __name__ == '__main__':
         app.run_polling()
 
     except KeyboardInterrupt:
-        print("\n프로그램 종료 중...")
+        print("\n[SYSTEM] 사용자에 의해 프로그램 종료 요청됨")
 
     finally:
         GPIO.cleanup()
         cv2.destroyAllWindows()
-        print("GPIO 정리 완료")
+        print("[SYSTEM] GPIO 및 리소스 정리 완료")
