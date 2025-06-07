@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import threading
 
 # 설정
-TOKEN = 'YOUR_BOT_TOKEN'  # 텔레그램 봇 토큰 입력
+TOKEN = 'YOUR_BOT_TOKEN'
 BUTTON_PIN = 21
 LED_PIN = 6
 
@@ -24,7 +24,7 @@ current_chat_id = None
 face_cascade = cv2.CascadeClassifier('/home/pi/haar/haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('/home/pi/haar/haarcascade_eye.xml')
 
-# 버튼 콜백
+# 버튼 콜백 함수
 def button_callback(pin):
     global detect_on
     detect_on = not detect_on
@@ -35,7 +35,7 @@ def button_callback(pin):
 
 GPIO.add_event_detect(BUTTON_PIN, GPIO.RISING, callback=button_callback, bouncetime=200)
 
-# /start 명령 처리
+# /start 명령 처리 함수
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global current_chat_id
     current_chat_id = update.effective_chat.id
@@ -46,7 +46,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     print(f"[INFO] chat_id 등록됨: {current_chat_id}")
 
-# 얼굴+눈 감지 루프
+# 얼굴 + 눈 감지 루프
 def face_eye_detect_loop():
     while True:
         if detect_on and current_chat_id:
@@ -90,21 +90,29 @@ def face_eye_detect_loop():
             camera.release()
         time.sleep(1)
 
-# 실행
+# 메인 함수
+def main():
+    print("▶ 얼굴+눈 감지 봇 실행 중... /start 입력 후 버튼으로 제어하세요.")
+
+    # ApplicationBuilder()로 봇 생성 및 토큰 설정
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    # /start 명령 등록
+    app.add_handler(CommandHandler("start", start))
+
+    # 감지 루프를 백그라운드 스레드로 실행
+    t = threading.Thread(target=face_eye_detect_loop, daemon=True)
+    t.start()
+
+    # 봇 실행 (텔레그램 서버와 지속적으로 통신)
+    app.run_polling()
+
+# 프로그램 시작점
 if __name__ == '__main__':
     try:
-        print("▶ 얼굴+눈 감지 봇 실행 중... /start 입력 후 버튼으로 제어하세요.")
-        app = ApplicationBuilder().token(TOKEN).build()
-        app.add_handler(CommandHandler("start", start))
-
-        t = threading.Thread(target=face_eye_detect_loop, daemon=True)
-        t.start()
-
-        app.run_polling()
-
+        main()
     except KeyboardInterrupt:
         print("\n⛔ 프로그램 종료 중...")
-
     finally:
         GPIO.cleanup()
         print("✅ GPIO 정리 완료")
